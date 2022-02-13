@@ -2,11 +2,13 @@
 
 // const
 const numDigits = 10;
-const calculatorLayout = ["7", "8", "9", "/", "4", "5", "6", "x", "1", "2", "3", "-",
+const calculatorLayout = ["7", "8", "9", "/", "4", "5", "6", "*", "1", "2", "3", "-",
                     ".", "0", "=", "+"];
 let displayValue = 0;
 let currentOperator = "";
+let isFloat = false;
 let numList = [];
+let currNum = [];
 
 
 // add function
@@ -37,6 +39,7 @@ function divide(a, b) {
 function operate(operatorStr, a, b){
 
   let result = 0;
+
   // switch statement
   switch(operatorStr){
 
@@ -53,13 +56,23 @@ function operate(operatorStr, a, b){
       break;
 
       case "/":
+        // display an error msg if someone tries to divide by zero
+        if(b == 0){
+          alert("You can't divide by 0!");
+          return;
+        }
         result = divide(a,b);
         break;
   }
 
   // update display
+  // check if isFloat if so rounding
+  if(isFloat){result = roundResult(result);}
   updateDisplay(result);
+  // empty the list
   numList = [];
+  // add result to numList
+  numList.push(result);
 
 }
 
@@ -83,11 +96,13 @@ function createClearButton(){
 
 // on clear buttons
 function clearDisplay(){
-  console.log("hi");
   // check
   const displayNum = document.querySelector(".display-value");
 
   displayNum.textContent = 0;
+  currNum = [];
+  numList = [];
+  isFloat = false;
 }
 
 // create number buttons for calculator
@@ -112,6 +127,24 @@ function createDigits(){
 
 }
 
+// rounding function
+function roundResult(result){
+
+  return Math.round(result * 1000) / 1000;
+}
+
+// show current displayNum
+function showCurrentDisplay(displayNum){
+  displayNum.textContent = currNum.join("");
+}
+
+// clears current entered number
+function clearCurrentNum(){
+
+  currNum = [];
+
+}
+
 // button listening functions
 function buttonListen() {
 
@@ -124,17 +157,66 @@ function buttonListen() {
 
       // check
       displayValue = parseInt(button.textContent);
+      // if operator button has been pressed
       if(isNaN(displayValue)){
 
+        // operate
         if(button.textContent == "="){
-          operate(currentOperator, numList[0], numList[1]);
-        } else {
+
+          // check if there's anything to operate on, if not return
+          if(numList < 2){
+
+            return;
+
+          } else{
+
+            // add current number to list and operate
+            numList.push(currNum.join(""));
+            clearCurrentNum();
+            if(isFloat){
+              operate(currentOperator, parseFloat(numList[0]), parseFloat(numList[1]));
+            } else{
+              operate(currentOperator, parseInt(numList[0]), parseInt(numList[1]));
+            }
+
+
+          }
+        }else if(button.textContent == "."){
+
+          // add to currNum list
+          currNum.push(".");
+          isFloat = true;
+
+        }else {
+            // operator button has been pressed
+            if(currNum.length == 0){
+
+              return;
+            }
+
+            // add current num to list & clear for next one
+            numList.push(currNum.join(""));
+            clearCurrentNum();
+            // auto operate
+            if(numList.length == 2){
+
+              if(isFloat){
+                operate(currentOperator, parseFloat(numList[0]), parseFloat(numList[1]));
+              } else{
+                operate(currentOperator, parseInt(numList[0]), parseInt(numList[1]));
+              }
+            }
+          // keeps track of current operator
           currentOperator = button.textContent;
         }
+        // if number button has been pressed
       } else {
 
-        numList.push(displayValue);
-        displayNum.textContent = displayValue;
+          // push num to number list and display in display
+          currNum.push(displayValue);
+          showCurrentDisplay(displayNum);
+          // operate if numList length ==2 and current operator != null
+
       }
 
     })
